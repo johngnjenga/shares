@@ -97,9 +97,17 @@ HTML_DIR = os.path.join(APP_DIR, "html")
 HIST_FILE = os.path.join(APP_DIR, "nse_historical.csv")
 
 TICKERS = [
-    "ABSA", "KCB", "EQTY", "COOP", "SCOM", "NCBA", "DTK", "IMH",
-    "BRIT", "SBIC", "SCBK", "BAT", "EABL", "BAMB", "CIC", "JUB",
-    "TOTL", "KQ", "KPLC", "KUKZ", "SASN",
+    "EGAD","KAPC","KUKZ","LIMT","SASN","WTK",
+"CGEN",
+"ABSA","SBIC","IMH","DTK","SCBK","EQTY","COOP","BKG","HFCK","KCB","NCBA",
+"XPRS","SMER","KQ","NMG","SGL","TPSE","SCAN","UCHM","LKL","NBV","CRWN","CABL","PORT",
+"TOTL","KEGN","KPLC","UMME",
+"JUB","SLAM","KNRE","LBTY","BRIT","CIC",
+"OCH","CTUM","TCL","HAFR","KURV",
+"NSE",
+"BOC","BAT","CARB","EABL","UNGA","EVRD","AMAC","FTGH","SKL",
+"SCOM",
+"LAPR","GLD","SMWF"
 ]
 
 # ---------------------------------------------------------------------------
