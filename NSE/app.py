@@ -2,6 +2,8 @@ import os
 import re
 import time
 from datetime import datetime
+import concurrent.futures
+from functools import partial
 
 import numpy as np
 import pandas as pd
@@ -186,37 +188,57 @@ def parse_pct(s):
 # Data layer
 # ---------------------------------------------------------------------------
 
+def download_single_ticker(ticker, session, base_url, headers, html_dir):
+    """Download a single ticker's HTML page."""
+    try:
+        r = session.get(base_url.format(ticker.lower()),
+                        headers=headers, timeout=10)
+        r.raise_for_status()
+        with open(os.path.join(html_dir, f"{ticker}.html"), "w",
+                  encoding="utf-8") as f:
+            f.write(r.text)
+        return ticker, True
+    except Exception as e:
+        print(f"Failed to download {ticker}: {e}")
+        return ticker, False
+
+
 def download_html_pages(tickers, progress_container):
-    """Download HTML pages from afx.kwayisi.org."""
+    """Download HTML pages from afx.kwayisi.org using concurrent downloads."""
     BASE_URL = "https://afx.kwayisi.org/nse/{}.html"
     HEADERS = {"User-Agent": "Mozilla/5.0"}
     os.makedirs(HTML_DIR, exist_ok=True)
 
     session = requests.Session()
-    retries = Retry(total=5, backoff_factor=2,
+    retries = Retry(total=3, backoff_factor=1,
                     status_forcelist=[429, 500, 502, 503, 504],
                     allowed_methods=["GET"])
-    adapter = HTTPAdapter(max_retries=retries)
+    adapter = HTTPAdapter(max_retries=retries, pool_connections=20, pool_maxsize=20)
     session.mount("https://", adapter)
     session.mount("http://", adapter)
 
     bar = progress_container.progress(0, text="Starting download...")
     results = {}
-
-    for i, ticker in enumerate(tickers):
-        bar.progress((i + 1) / len(tickers),
-                     text=f"Downloading {ticker}... ({i+1}/{len(tickers)})")
-        try:
-            r = session.get(BASE_URL.format(ticker.lower()),
-                            headers=HEADERS, timeout=30)
-            r.raise_for_status()
-            with open(os.path.join(HTML_DIR, f"{ticker}.html"), "w",
-                      encoding="utf-8") as f:
-                f.write(r.text)
-            results[ticker] = True
-        except Exception:
-            results[ticker] = False
-        time.sleep(2)
+    
+    # Create a partial function with pre-filled parameters
+    download_func = partial(download_single_ticker, session=session, 
+                           base_url=BASE_URL, headers=HEADERS, html_dir=HTML_DIR)
+    
+    # Use ThreadPoolExecutor for concurrent downloads
+    completed = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        # Submit all tasks
+        future_to_ticker = {executor.submit(download_func, ticker): ticker 
+                           for ticker in tickers}
+        
+        # Process results as they complete
+        for future in concurrent.futures.as_completed(future_to_ticker):
+            ticker, success = future.result()
+            results[ticker] = success
+            completed += 1
+            bar.progress(completed / len(tickers),
+                        text=f"Downloaded {ticker}... ({completed}/{len(tickers)})")
+            time.sleep(0.1)  # Small delay between processing results
 
     bar.empty()
     return results
