@@ -494,41 +494,12 @@ with st.sidebar:
     st.caption("Nairobi Securities Exchange")
     st.divider()
 
-    # Refresh All Data button
-    st.markdown("### 🔄 Data Refresh")
-    if st.button("🔄 Refresh All Data", type="primary", **FULL_WIDTH):
+    # Refresh button
+    if st.button("🔄  Refresh Data", type="primary", **FULL_WIDTH):
         progress_area = st.empty()
         results = download_html_pages(TICKERS, progress_area)
         ok = sum(1 for v in results.values() if v)
         st.success(f"Downloaded {ok}/{len(TICKERS)} stocks")
-        st.cache_data.clear()
-        st.session_state["last_refresh"] = datetime.now()
-        time.sleep(0.5)
-        st.rerun()
-    
-    # Selective refresh option
-    st.markdown("**— OR —**")
-    st.caption("Refresh specific tickers only")
-    
-    selected_tickers_refresh = st.multiselect(
-        "Select tickers to refresh",
-        options=TICKERS,
-        default=[],
-        key="refresh_ticker_select",
-        help="Choose one or more tickers to refresh only those"
-    )
-    
-    refresh_selected_disabled = len(selected_tickers_refresh) == 0
-    if st.button(
-        "🔄 Refresh Selected", 
-        disabled=refresh_selected_disabled,
-        type="secondary",
-        **FULL_WIDTH
-    ):
-        progress_area = st.empty()
-        results = download_html_pages(selected_tickers_refresh, progress_area)
-        ok = sum(1 for v in results.values() if v)
-        st.success(f"Downloaded {ok}/{len(selected_tickers_refresh)} selected stocks")
         st.cache_data.clear()
         st.session_state["last_refresh"] = datetime.now()
         time.sleep(0.5)
