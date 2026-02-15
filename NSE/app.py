@@ -522,7 +522,7 @@ with st.sidebar:
     if st.button(
         "🔄 Refresh Selected", 
         disabled=refresh_selected_disabled,
-        type="secondary" if not refresh_selected_disabled else "secondary",
+        type="secondary",
         **FULL_WIDTH
     ):
         progress_area = st.empty()
